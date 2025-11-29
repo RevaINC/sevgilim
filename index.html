@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>İyi ki Doğdun Nurum</title>
 
+<!-- Romantik Font -->
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+
 <style>
-/* GENEL */
 body {
     margin: 0;
     background: #000;
@@ -31,9 +33,9 @@ body {
     flex-direction: column;
     gap: 50px;
     text-align: center;
+    transition: 0.6s;
 }
 
-/* Arkaplanda büyük soft kalp */
 #big-heart {
     position: absolute;
     width: 350px;
@@ -65,10 +67,11 @@ body {
 }
 
 #love-screen h1 {
-    font-size: 48px;
-    font-family: "Playfair Display", serif;
-    color: #ff5775;
+    font-size: 52px;
+    font-family: "Great Vibes", cursive;
+    color: #ff6a80;
     text-shadow: 0 0 25px rgba(255,60,80,0.8);
+    letter-spacing: 2px;
     z-index: 10;
 }
 
@@ -76,7 +79,6 @@ body {
     display: flex;
     flex-direction: row;
     gap: 120px;
-    position: relative;
     z-index: 10;
 }
 
@@ -85,15 +87,13 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    position: relative;
 }
 
 .btn-img {
     width: 90px;
     height: 90px;
     object-fit: contain;
-    pointer-events: none;
-    filter: drop-shadow(0 0 10px rgba(255,80,120,0.9));
+    filter: drop-shadow(0 0 12px rgba(255,80,120,0.9));
 }
 
 .love-btn {
@@ -103,7 +103,6 @@ body {
     cursor: pointer;
     border-radius: 14px;
     font-weight: bold;
-    position: relative;
     z-index: 100000 !important;
     transition: 0.3s;
 }
@@ -124,6 +123,20 @@ body {
     z-index: 99999 !important;
 }
 
+
+/* -----------------------------
+   ARKA PLAN ANİMASYON (Kalp Yağmuru + Firework)
+------------------------------*/
+#effects-layer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1; /* içerik ALTINDA */
+}
+
+
 /* -----------------------------
    2) ANA SAYFA
 ------------------------------*/
@@ -132,7 +145,7 @@ body {
     width: 100%;
     height: 100%;
     background: radial-gradient(circle at center, rgba(255,0,40,0.15), rgba(0,0,0,1));
-    filter: blur(35px);
+    filter: blur(30px);
     z-index: 0;
 }
 
@@ -148,26 +161,26 @@ body {
     margin: 70px auto;
     text-align: center;
     display: none;
+    z-index: 5;
 }
 
 .title {
-    font-size: 54px;
-    font-family: "Playfair Display", serif;
+    font-size: 62px;
+    font-family: "Great Vibes", cursive;
     color: #ff4d70;
     text-shadow: 0 0 22px rgba(255,0,60,0.6);
 }
 
 .message {
     margin-top: 25px;
-    font-size: 20px;
+    font-size: 22px;
     color: #e9e9e9;
-    line-height: 1.8;
+    line-height: 1.9;
     border-left: 3px solid rgba(255,0,60,0.4);
     padding-left: 20px;
-    font-family: Georgia, serif;
+    font-family: "Inter", sans-serif;
 }
 
-/* Romantik resim çerçevesi */
 #birthday-image {
     margin-top: 35px;
     width: 100%;
@@ -201,6 +214,9 @@ body {
     </div>
 </div>
 
+<!-- ARKA PLAN KALP + FIREWORK -->
+<canvas id="effects-layer"></canvas>
+
 <!-- MÜZİK -->
 <audio id="bg-music" src="src/bu-son-olsun.mp3"></audio>
 
@@ -224,23 +240,17 @@ body {
 
 <script>
 /* ----------------------------------------------------
-   HAYIR BUTONU KAÇMA — KAYBOLMA SORUNU FIXLİ
+   HAYIR KAÇMA
 ---------------------------------------------------- */
 const noBtn = document.getElementById("no-btn");
-
 noBtn.addEventListener("mouseenter", () => {
-
     const rect = noBtn.getBoundingClientRect();
-
     const offsetX = (Math.random() * 240) - 120;
     const offsetY = (Math.random() * 240) - 120;
-
     let newX = rect.left + offsetX;
     let newY = rect.top + offsetY;
-
     newX = Math.max(0, Math.min(window.innerWidth - rect.width, newX));
     newY = Math.max(0, Math.min(window.innerHeight - rect.height, newY));
-
     noBtn.style.position = "fixed";
     noBtn.style.left = newX + "px";
     noBtn.style.top  = newY + "px";
@@ -249,9 +259,10 @@ noBtn.addEventListener("mouseenter", () => {
 
 
 /* ----------------------------------------------------
-   EVET → GEÇİŞ
+   EVET → GEÇİŞ + ANİMASYON BAŞLATMA
 ---------------------------------------------------- */
 document.getElementById("yes-btn").addEventListener("click", () => {
+
     document.getElementById("love-screen").style.opacity = "0";
 
     setTimeout(() => {
@@ -260,8 +271,114 @@ document.getElementById("yes-btn").addEventListener("click", () => {
 
         document.getElementById("bg-music").play();
         document.getElementById("birthday-image").style.display = "block";
+
+        startHeartRain();
+        startFireworks();
+
     }, 600);
 });
+
+
+/* ----------------------------------------------------
+   ❤️ KALP YAĞMURU
+---------------------------------------------------- */
+function startHeartRain() {
+    const canvas = document.getElementById("effects-layer");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+
+    const hearts = [];
+
+    function createHeart() {
+        hearts.push({
+            x: Math.random() * canvas.width,
+            y: -20,
+            size: Math.random() * 14 + 8,
+            speed: Math.random() * 1 + 0.5,
+            opacity: Math.random() * 0.6 + 0.4
+        });
+    }
+
+    function drawHeart(h) {
+        ctx.save();
+        ctx.globalAlpha = h.opacity;
+        ctx.fillStyle = "pink";
+        ctx.font = h.size + "px Arial";
+        ctx.fillText("❤", h.x, h.y);
+        ctx.restore();
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        hearts.forEach(h => {
+            h.y += h.speed;
+            drawHeart(h);
+        });
+
+        requestAnimationFrame(animate);
+    }
+
+    setInterval(createHeart, 100);
+    animate();
+}
+
+
+/* ----------------------------------------------------
+   🎆 HAVAİ FİŞEKLER
+---------------------------------------------------- */
+function startFireworks() {
+    const canvas = document.getElementById("effects-layer");
+    const ctx = canvas.getContext("2d");
+
+    const fireworks = [];
+
+    function boom() {
+        const particles = [];
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * (canvas.height / 2);
+
+        for (let i = 0; i < 50; i++) {
+            particles.push({
+                x, y,
+                angle: Math.random() * Math.PI * 2,
+                speed: Math.random() * 3 + 1,
+                size: Math.random() * 3 + 1,
+                alpha: 1
+            });
+        }
+
+        fireworks.push(particles);
+    }
+
+    function update() {
+        const canvas = document.getElementById("effects-layer");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        fireworks.forEach((fw, i) => {
+            fw.forEach(p => {
+                p.x += Math.cos(p.angle) * p.speed;
+                p.y += Math.sin(p.angle) * p.speed;
+                p.alpha -= 0.015;
+
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = "rgb(255,120,150)";
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            if (fw.every(p => p.alpha <= 0)) fireworks.splice(i, 1);
+        });
+
+        requestAnimationFrame(update);
+    }
+
+    setInterval(boom, 900);
+    update();
+}
 </script>
 
 </body>
